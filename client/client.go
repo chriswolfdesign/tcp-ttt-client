@@ -5,6 +5,8 @@ import (
 	"encoding/gob"
 	"fmt"
 	"net"
+
+	"github.com/chriswolfdesign/tcp-ttt-common/tcp_payloads"
 )
 
 type Message struct {
@@ -24,7 +26,7 @@ func GenerateClient(name, host string) Client {
 	}
 }
 
-func (c *Client) ContactServer() {
+func (c *Client) RegisterPlayer() {
 	conn, err := net.Dial("tcp", "localhost:8080")
 	if err != nil {
 		fmt.Println(err)
@@ -34,12 +36,9 @@ func (c *Client) ContactServer() {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 
-	message := Message{
-		Name: "Chris",
-		Text: "Hello",
-	}
+	onboardingRequest := tcp_payloads.GeneratePlayerOnboardingRequest("Chris")
 
-	if err = enc.Encode(message); err != nil {
+	if err = enc.Encode(onboardingRequest); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -59,7 +58,7 @@ func (c *Client) ContactServer() {
 
 	tmp := bytes.NewBuffer(responseBuf)
 
-	response := &Message{}
+	response := &tcp_payloads.PlayerOnboardingResponse{}
 	dec := gob.NewDecoder(tmp)
 
 	if err = dec.Decode(response); err != nil {

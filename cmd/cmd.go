@@ -6,5 +6,5 @@ import (
 
 func main() {
 	cl := client.GenerateClient("Chris", "localhost:8080")
-	cl.ContactServer()
+	cl.RegisterPlayer()
 }
