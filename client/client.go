@@ -36,7 +36,7 @@ func (c *Client) RegisterPlayer() {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 
-	onboardingRequest := tcp_payloads.GeneratePlayerOnboardingRequest("Chris")
+	onboardingRequest := tcp_payloads.GeneratePlayerOnboardingRequest(c.Name)
 
 	if err = enc.Encode(onboardingRequest); err != nil {
 		fmt.Println(err)
