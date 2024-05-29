@@ -13,7 +13,6 @@ func main() {
 
 	fmt.Println("Waiting for game to begin")
 	cl.WaitForGameStart()
-	fmt.Println("Game has begun")
 }
 
 func getPlayerName() string {
