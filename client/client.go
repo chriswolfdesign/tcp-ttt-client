@@ -15,8 +15,9 @@ type Message struct {
 }
 
 type Client struct {
-	Name string
-	Host string
+	Name   string
+	Host   string
+	Player string
 }
 
 func GenerateClient(name, host string) Client {
@@ -66,7 +67,8 @@ func (c *Client) RegisterPlayer() {
 		return
 	}
 
-	fmt.Printf("Received: %+v\n", response)
+	c.Player = response.Player
+	fmt.Printf("Client: %+v\n", c)
 
 	conn.Close()
 }
