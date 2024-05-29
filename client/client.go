@@ -87,7 +87,6 @@ func (c *Client) WaitForGameStart() {
 		gameStartedBuf := make([]byte, 1024)
 		_, err := c.ServerConn.Read(gameStartedBuf)
 		if err != nil {
-			// fmt.Println(err)
 			continue
 		}
 
@@ -97,13 +96,16 @@ func (c *Client) WaitForGameStart() {
 		dec := gob.NewDecoder(tmp)
 
 		if err = dec.Decode(gameStartedMessage); err != nil {
-			// fmt.Println(err)
 			continue
 		}
 
 		if gameStartedMessage.PayloadType == strings.TYPE_GAME_STARTING_MESSAGE {
 			gameStarted = true
 		}
+
+		fmt.Println("Game has begun")
+
+		gameStartedMessage.Game.Board.PrintBoard()
 	}
 
 	return
