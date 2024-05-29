@@ -10,6 +10,10 @@ func main() {
 
 	cl := client.GenerateClient(playerName, "localhost:8080")
 	cl.RegisterPlayer()
+
+	fmt.Println("Waiting for game to begin")
+	cl.WaitForGameStart()
+	fmt.Println("Game has begun")
 }
 
 func getPlayerName() string {

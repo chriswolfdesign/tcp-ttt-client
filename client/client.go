@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/chriswolfdesign/tcp-ttt-common/enums"
+	"github.com/chriswolfdesign/tcp-ttt-common/strings"
 	"github.com/chriswolfdesign/tcp-ttt-common/tcp_payloads"
 )
 
@@ -15,9 +17,10 @@ type Message struct {
 }
 
 type Client struct {
-	Name   string
-	Host   string
-	Player string
+	Name       string
+	Host       string
+	Player     string
+	ServerConn net.Conn
 }
 
 func GenerateClient(name, host string) Client {
@@ -50,6 +53,8 @@ func (c *Client) RegisterPlayer() {
 		return
 	}
 
+	c.ServerConn = conn
+
 	responseBuf := make([]byte, 1024)
 	_, err = conn.Read(responseBuf)
 	if err != nil {
@@ -68,7 +73,38 @@ func (c *Client) RegisterPlayer() {
 	}
 
 	c.Player = response.Player
-	fmt.Printf("Client: %+v\n", c)
+	if c.Player == enums.PLAYER_ONE {
+		fmt.Println("You are registered, you will be playing as player 1")
+	} else {
+		fmt.Println("You are registered, you will be playing as player 2")
+	}
+}
 
-	conn.Close()
+func (c *Client) WaitForGameStart() {
+	gameStarted := false
+
+	for !gameStarted {
+		gameStartedBuf := make([]byte, 1024)
+		_, err := c.ServerConn.Read(gameStartedBuf)
+		if err != nil {
+			// fmt.Println(err)
+			continue
+		}
+
+		tmp := bytes.NewBuffer(gameStartedBuf)
+
+		gameStartedMessage := &tcp_payloads.GameStartingMessage{}
+		dec := gob.NewDecoder(tmp)
+
+		if err = dec.Decode(gameStartedMessage); err != nil {
+			// fmt.Println(err)
+			continue
+		}
+
+		if gameStartedMessage.PayloadType == strings.TYPE_GAME_STARTING_MESSAGE {
+			gameStarted = true
+		}
+	}
+
+	return
 }
