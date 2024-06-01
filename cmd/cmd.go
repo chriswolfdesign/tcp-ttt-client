@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"tcp-ttt-client/client"
 
+	"github.com/chriswolfdesign/tcp-ttt-common/model"
 	"github.com/chriswolfdesign/tcp-ttt-common/strings"
 	"github.com/chriswolfdesign/tcp-ttt-common/tcp_payloads"
 )
@@ -17,34 +18,65 @@ func main() {
 	cl.RegisterPlayer()
 
 	fmt.Println("Waiting for game to begin")
-	cl.WaitForGameStart()
+	gameStarted := false
+
+	var game *model.Game
+
+	for !gameStarted {
+		gameStartedBuf := make([]byte, 1024)
+		_, err := cl.ServerConn.Read(gameStartedBuf)
+		if err != nil {
+			continue
+		}
+
+		tmp := bytes.NewBuffer(gameStartedBuf)
+
+		gameStartedMessage := &tcp_payloads.GameStartingMessage{}
+		dec := gob.NewDecoder(tmp)
+
+		if err = dec.Decode(gameStartedMessage); err != nil {
+			continue
+		}
+
+		if gameStartedMessage.PayloadType == strings.TYPE_GAME_STARTING_MESSAGE {
+			game = &gameStartedMessage.Game
+			gameStarted = true
+		}
+
+		fmt.Println("Game has begun")
+
+		gameStartedMessage.Game.Board.PrintBoard()
+	}
 
 	gameOver := false
 
 	for !gameOver {
-		fmt.Println("Game not over")
-
-		playerTurnBuf := make([]byte, 1024)
-		_, err := cl.ServerConn.Read(playerTurnBuf)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
+		if game.CurrentPlayer == cl.Player {
+			cl.MakeMove()
+		} else {
+			fmt.Println("Waiting for other player")
 		}
 
-		tmp := bytes.NewBuffer(playerTurnBuf)
-
-		playerTurnMessage := &tcp_payloads.PlayerTurnMessage{}
-		dec := gob.NewDecoder(tmp)
-
-		if err = dec.Decode(playerTurnMessage); err != nil {
+		gameStateBuf := make([]byte, 1024)
+		_, err := cl.ServerConn.Read(gameStateBuf)
+		if err != nil {
+			fmt.Println(err)
 			continue
 		}
 
-		if playerTurnMessage.PayloadType == strings.TYPE_PLAYER_TURN_MESSAGE {
-			fmt.Printf("Player turn is %s!\n", playerTurnMessage.Player)
+		tmp := bytes.NewBuffer(gameStateBuf)
+
+		gameStateResponse := &tcp_payloads.GameStateMessage{}
+
+		dec := gob.NewDecoder(tmp)
+
+		if err = dec.Decode(gameStateResponse); err != nil {
+			fmt.Println(err)
+			continue
 		}
 
-		return
+		game = &gameStateResponse.Game
+		game.Board.PrintBoard()
 	}
 }
 

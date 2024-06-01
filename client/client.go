@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/chriswolfdesign/tcp-ttt-common/enums"
 	"github.com/chriswolfdesign/tcp-ttt-common/strings"
@@ -107,6 +108,87 @@ func (c *Client) WaitForGameStart() {
 
 		gameStartedMessage.Game.Board.PrintBoard()
 	}
+}
 
-	return
+func (c *Client) MakeMove() {
+	illegalMove := true
+
+	for illegalMove {
+		fmt.Print("Row: ")
+		var rowString string
+		_, err := fmt.Scanln(&rowString)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		row, err := strconv.Atoi(rowString)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Print("Col: ")
+		var colString string
+		_, err = fmt.Scanln(&colString)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		col, err := strconv.Atoi(colString)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		var makeMoveBuffer bytes.Buffer
+		enc := gob.NewEncoder(&makeMoveBuffer)
+
+		makeMoveRequest := tcp_payloads.MakeMoveMessage{
+			Row: row,
+			Col: col,
+			PayloadType: strings.TYPE_MAKE_MOVE_MESSAGE,
+		}
+
+		if err = enc.Encode(makeMoveRequest); err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		_, err = c.ServerConn.Write(makeMoveBuffer.Bytes())
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Println("Sent move to server")
+
+		responseBuf := make([]byte, 1024)
+		_, err = c.ServerConn.Read(responseBuf)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		tmp := bytes.NewBuffer(responseBuf)
+
+		response := &tcp_payloads.IllegalMoveMessage{}
+		dec := gob.NewDecoder(tmp)
+
+		if err = dec.Decode(response); err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		if response.PayloadType == strings.TYPE_ILLEGAL_MOVE_MESSAGE {
+			fmt.Println(response.ErrorMessage)
+			continue
+		} else if response.PayloadType == strings.TYPE_ACCEPTED_MOVE_MESSAGE {
+			illegalMove = false
+		} else {
+			fmt.Println("Unknown payload type:", response.PayloadType)
+			continue
+		}
+	}
 }
