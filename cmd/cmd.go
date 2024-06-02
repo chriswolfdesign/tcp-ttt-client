@@ -51,6 +51,13 @@ func main() {
 	gameOver := false
 
 	for !gameOver {
+
+		if game.Winner != strings.NOT_OVER {
+			fmt.Println("The game is over")
+			fmt.Println("Result:", game.Winner)
+			return
+		}
+
 		if game.CurrentPlayer == cl.Player {
 			cl.MakeMove()
 		} else {
