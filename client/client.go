@@ -104,8 +104,6 @@ func (c *Client) WaitForGameStart() {
 			gameStarted = true
 		}
 
-		fmt.Println("Game has begun")
-
 		gameStartedMessage.Game.Board.PrintBoard()
 	}
 }
@@ -146,8 +144,8 @@ func (c *Client) MakeMove() {
 		enc := gob.NewEncoder(&makeMoveBuffer)
 
 		makeMoveRequest := tcp_payloads.MakeMoveMessage{
-			Row: row,
-			Col: col,
+			Row:         row,
+			Col:         col,
 			PayloadType: strings.TYPE_MAKE_MOVE_MESSAGE,
 		}
 
@@ -161,8 +159,6 @@ func (c *Client) MakeMove() {
 			fmt.Println(err)
 			continue
 		}
-
-		fmt.Println("Sent move to server")
 
 		responseBuf := make([]byte, 1024)
 		_, err = c.ServerConn.Read(responseBuf)
